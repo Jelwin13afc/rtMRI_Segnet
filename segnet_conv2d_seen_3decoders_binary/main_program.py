@@ -29,20 +29,23 @@ import scipy.io as sio
 #images_path=root_dir+'input/'
 #batch_size=[len(os.listdir(images_path))]
 
-subs = ['F1','F2','F3','F4','F5','M1','M2','M3','M4','M5']
-
+# subs = ['F1','F2','F3','F4','F5','M1','M2','M3','M4','M5']
+subs=['M5']
 #model_dir = '/home/user/home2/models/navaneetha/segnet_conv2d_seen_3decoders_binary/'
-model_dir = '/mnt/d/IISc_Internship/segnet_conv2d_seen_3decoders_binary/'
+model_dir = '/mnt/d/IISc_Internship_3d/segnet_conv2d_seen_3decoders_binary/'
 #in_dir = '/home/user/home2/data/navaneetha/110_videos/' ## videos directory
 #out_dir = '/home/user/home2/data/navaneetha/mat_110/' ## masks matfiles directory
-in_dir = '/mnt/d/IISc_Internship/Videos/' ## videos directory
-out_dir = '/mnt/d/IISc_Internship/Masks/' ## masks matfiles directory
+in_dir = '/mnt/d/IISc_Internship_3d/M5_vids/' ## videos directory
+out_dir = '/mnt/d/IISc_Internship_3d/M5_masks/' ## masks matfiles directory
 ##mat_dir = '/home2/data/navaneetha/fixed_c1.mat'
 n_ops = 2
+frames = 24
 height=68
 width=68
-epoch =10
+epoch =15
 new = 1
+fixed_dim = 68
+
 #segnet_model=model.Segnet(n_ops ,height, width)
 #for layer in segnet_model.layers:
     #print(layer.output_shape)
@@ -53,7 +56,7 @@ actual_set=np.array([342,391,392,393,394,395,397,398,399,406,413])
 train_matrix = actual_set[0:9]
 val_matrix = actual_set[9:10]
 test_matrix= actual_set[10:11]
-X_train,Y_train,X_val,Y_val,X_test,Y_test,name,name_val, names_test=image_utils.imageSegmentationGenerator(in_dir,out_dir,n_ops,height,width,train_matrix,val_matrix,test_matrix)
+X_train,Y_train,X_val,Y_val,X_test,Y_test,name,name_val, names_test=image_utils.imageSegmentationGenerator(in_dir,out_dir,n_ops,frames,height,width,train_matrix,val_matrix,test_matrix)
 print ('X_train.shape',X_train.shape)
 print ('Y_train[0].shape',Y_train[0].shape)
 print (Y_train[1].shape)
@@ -70,7 +73,7 @@ print (name.shape)
 print (name_val.shape)
 
 print('*********new model fitting*********')
-segnet_model=model.Segnet(n_ops ,height, width)
+segnet_model=model.Segnet(n_ops ,height, width, frames,fixed_dim)
 segnet_model.summary()
 segnet_model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy'])
 print('compilation completed')
@@ -80,3 +83,5 @@ history=segnet_model.fit(X_train, Y_train, epochs=epoch,batch_size=2,validation_
 
 score = segnet_model.evaluate(X_test, Y_test)
 # print(f'Test loss: {score[0]} / Test accuracy: {score[1]}')
+preds = image_utils.predicted_output(segnet_model,X_test,frames,height,width,n_ops)
+sio.savemat(model_dir+'test_pred_413.mat', {'pred':preds,'name':name_test})
